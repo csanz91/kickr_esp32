@@ -6,17 +6,19 @@ This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and 
 
 -   Connects to a KICKR CORE trainer via BLE.
 -   Controls and retrieves the gears.
--   Includes basic riding data retrieval (power, cadence, speed, heart rate)
+-   Includes basic riding data retrieval (power, cadence, speed, heart rate).
+-   Supports hardware buttons for gear control.
 
 ## Hardware Required
 
--   ESP32 development board. It was tested with an ESP32 C3
--   Wahoo KICKR CORE smart trainer
+-   ESP32 development board. It was tested with an ESP32 C3.
+-   Wahoo KICKR CORE smart trainer.
+-   Two momentary push buttons for gear control.
 
 ## Software Required
 
--   Arduino IDE with ESP32 board support
--   BLE library for ESP32 (included with ESP32 board support)
+-   Arduino IDE with ESP32 board support.
+-   BLE library for ESP32 (included with ESP32 board support).
 
 ## Installation
 
@@ -27,7 +29,7 @@ This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and 
     -   Search for "ESP32" and install the "esp32 by Espressif Systems" package.
 2.  Clone this repository to your local machine.
 3.  Open the `kickr_esp32.ino` file in the Arduino IDE.
-4.  Change the [`DEVICE_NAME`] to match your device and [`GEAR_RATIOS`] as desired from [`kickr_constants.h`](kickr_constants.h)
+4.  Change the [`DEVICE_NAME`] to match your device and [`GEAR_RATIOS`] as desired from [`kickr_constants.h`](kickr_constants.h).
 5.  Ensure the correct board is selected (`Tools` \> `Board` \> `ESP32 Dev Module` or similar).
 6.  Upload the code to your ESP32.
 
@@ -36,7 +38,7 @@ This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and 
 1.  Power on your KICKR trainer.
 2.  Open the Serial Monitor in the Arduino IDE (set baud rate to 115200).
 3.  The ESP32 will scan for the KICKR and attempt to connect.
-4.  Once connected, the ESP32 will automatically change gears every few seconds.
+4.  Once connected, use the hardware buttons to change gears.
 5.  The Serial Monitor will display connection status, current gear, and other debug information.
 
 ## Code Overview
@@ -47,7 +49,7 @@ This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and 
 -   Initializes BLE, sets up the KICKR protocol, and handles the main program loop.
 -   Scans for the KICKR device using `BLEDevice::getScan()`.
 -   Connects to the KICKR using the [`KickrProtocol::connect`](kickr_protocol.cpp) method.
--   Changes gears periodically using the [`KickrProtocol::changeGear`](kickr_protocol.cpp) method.
+-   Changes gears using hardware buttons.
 -   The `loop()` function contains the main logic for connecting and controlling the KICKR.
 
 ### `kickr_protocol.h` and `kickr_protocol.cpp`
@@ -81,9 +83,7 @@ This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and 
 ## Future Enhancements
 
 -   Implement a user interface (e.g., web interface or mobile app) to control the KICKR.
--   Attach hardware buttons to control the gears
--   Support external bluetooth buttons
-
+-   Support external bluetooth buttons.
 
 ## License
 

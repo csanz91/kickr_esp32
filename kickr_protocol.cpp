@@ -52,6 +52,7 @@ bool KickrProtocol::connect(BLEAddress address)
     Serial.println("Found characteristics");
     enableNotifications();
     sendHello();
+    getCurrentGear();
 
     extern bool deviceConnected;
     deviceConnected = true;
@@ -68,14 +69,27 @@ void KickrProtocol::disconnect()
 
 void KickrProtocol::changeGear(uint8_t gearIndex)
 {
-    size_t gearCount = sizeof(GEAR_RATIOS) / sizeof(GEAR_RATIOS[0]);
-    if (gearIndex < 1 || gearIndex > gearCount)
+    if (gearIndex < 1 || gearIndex > MAX_GEAR)
         return;
 
     uint8_t buffer[32];
     size_t length = 0;
     createPhysicalParamMessage(buffer, length, GEAR_RATIOS[gearIndex - 1]);
     writeCommand(buffer, length);
+
+    currentGear = gearIndex;
+    Serial.print("Selected gear: ");
+    Serial.println(currentGear);
+}
+
+void KickrProtocol::gearUp() {
+    uint8_t nextGear = currentGear + 1;
+    changeGear(nextGear);
+}
+
+void KickrProtocol::gearDown() {
+    uint8_t nextGear = currentGear - 1;
+    changeGear(nextGear);
 }
 
 void KickrProtocol::getCurrentGear()
@@ -273,7 +287,7 @@ uint8_t KickrProtocol::parseGearFromDeviceInfo(const uint8_t *data, size_t lengt
             }
 
             // Find the gear index for this ratio
-            for (uint8_t gear = 0; gear < sizeof(GEAR_RATIOS) / sizeof(GEAR_RATIOS[0]); gear++)
+            for (uint8_t gear = 0; gear < MAX_GEAR; gear++)
             {
                 if (GEAR_RATIOS[gear] == ratio)
                 {

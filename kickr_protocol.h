@@ -28,6 +28,8 @@ public:
     static void decode_riding_data(BLERemoteCharacteristic *pCharacteristic, uint8_t *data, size_t length, bool isNotify);
     static RidingData getCurrentRidingData() { return currentRidingData; }
     uint8_t getCurrentGearIndex() { return currentGear; }
+    void gearUp();
+    void gearDown();
 
 private:
     BLEClient *pClient = nullptr;
