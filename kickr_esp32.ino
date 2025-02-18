@@ -12,9 +12,9 @@ void setup()
     Serial.begin(115200);
     kickr.init();
 
-    // Initialize button handlers with signed integers for gear changes
-    upButton = new ButtonHandler(UP_READ_PIN, UP_GND_PIN, true, std::bind(&KickrProtocol::shiftGear, &kickr, std::placeholders::_1));
-    downButton = new ButtonHandler(DOWN_READ_PIN, DOWN_GND_PIN, false, std::bind(&KickrProtocol::shiftGear, &kickr, std::placeholders::_1));
+    // Initialize button handlers using lambda callbacks for shiftGear
+    upButton = new ButtonHandler(UP_READ_PIN, UP_GND_PIN, true, [&](int8_t numGears) { kickr.shiftGear(numGears); });
+    downButton = new ButtonHandler(DOWN_READ_PIN, DOWN_GND_PIN, false, [&](int8_t numGears) { kickr.shiftGear(numGears); });
 }
 
 void loop()
