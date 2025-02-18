@@ -12,6 +12,7 @@ bool KickrProtocol::connect(BLEAddress address)
     {
         Serial.println("Creating client...");
         pClient = BLEDevice::createClient();
+        pClient->setClientCallbacks(new MyClientCallback(*this));
         if (pClient == nullptr)
         {
             Serial.println("Failed to create client!");
@@ -54,8 +55,6 @@ bool KickrProtocol::connect(BLEAddress address)
     sendHello();
     getCurrentGear();
 
-    extern bool deviceConnected;
-    deviceConnected = true;
     return true;
 }
 
@@ -67,9 +66,14 @@ void KickrProtocol::disconnect()
     }
 }
 
-void KickrProtocol::changeGear(uint8_t gearIndex)
+void KickrProtocol::changeGear(int8_t gearIndex)
 {
-    if (gearIndex < 1 || gearIndex > MAX_GEAR)
+    if (gearIndex < 1)
+        gearIndex = 1;
+    else if (gearIndex > MAX_GEAR)
+        gearIndex = MAX_GEAR;
+
+    if (gearIndex == currentGear)
         return;
 
     uint8_t buffer[32];
@@ -82,19 +86,18 @@ void KickrProtocol::changeGear(uint8_t gearIndex)
     Serial.println(currentGear);
 }
 
-void KickrProtocol::gearUp() {
-    uint8_t nextGear = currentGear + 1;
+void KickrProtocol::shiftGear(int8_t numGears)
+{
+    int8_t nextGear = currentGear + numGears;
     changeGear(nextGear);
-}
-
-void KickrProtocol::gearDown() {
-    uint8_t nextGear = currentGear - 1;
-    changeGear(nextGear);
+    lastGearChangeTime = millis(); // Update the last gear change time
+    triggerGearRatiosFetch = true;
 }
 
 void KickrProtocol::getCurrentGear()
 {
-    writeCommand(const_cast<uint8_t *>(MSG_DEVICE_INFO), sizeof(MSG_DEVICE_INFO));
+    Serial.println("Fetching current gear");
+    writeCommand(const_cast<uint8_t *>(MSG_RATIO_INFO), sizeof(MSG_RATIO_INFO));
 }
 
 void KickrProtocol::sendHello()
@@ -248,7 +251,8 @@ void KickrProtocol::commandCallback(BLERemoteCharacteristic *pCharacteristic, ui
         data[0] == MSG_HELLO[0] && data[1] == MSG_HELLO[1] && data[2] == MSG_HELLO[2] && data[3] == MSG_HELLO[3] &&
         data[4] == MSG_HELLO[4] && data[5] == MSG_HELLO[5] && data[6] == 0x02 && data[7] == MSG_HELLO[7])
     {
-        digitalWrite(LED_BUILTIN, HIGH); // Turn on LED on GPIO-8
+        Serial.println("Received hello response");
+        setStatusLed(true);
         return;
     }
 
@@ -265,26 +269,13 @@ void KickrProtocol::commandCallback(BLERemoteCharacteristic *pCharacteristic, ui
 }
 
 uint8_t KickrProtocol::parseGearFromDeviceInfo(const uint8_t *data, size_t length)
-{ // Added const
-    for (size_t i = 0; i < length - 2; i++)
+{
+    for (size_t i = 0; i < length - 1; i++)
     {
         if (data[i] == 0x40)
         { // Found field 8
-            uint16_t ratio = 0;
-            size_t j = i + 1;
-            uint8_t shift = 0;
-
-            while (j < length && (data[j] & 0x80))
-            { // LEB128 decoding
-                ratio |= (data[j] & 0x7F) << shift;
-                shift += 7;
-                j++;
-            }
-
-            if (j < length)
-            { // Add final byte
-                ratio |= (data[j] & 0x7F) << shift;
-            }
+            size_t pos = i + 1;
+            uint32_t ratio = decode_varint(data, length, pos);
 
             // Find the gear index for this ratio
             for (uint8_t gear = 0; gear < MAX_GEAR; gear++)
@@ -294,22 +285,111 @@ uint8_t KickrProtocol::parseGearFromDeviceInfo(const uint8_t *data, size_t lengt
                     return gear + 1;
                 }
             }
+            break;
         }
     }
     return 0;
 }
 
-// Ensure only one definition of onResult exists
-void KickrAdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice)
+void KickrProtocol::init()
+{
+    BLEDevice::init(CLIENT_NAME);
+    setupLed();
+    setStatusLed(false);
+
+    auto *pClient = BLEDevice::createClient();
+    pClient->setClientCallbacks(new MyClientCallback(*this));
+}
+
+void KickrProtocol::handleConnection(unsigned long currentTime)
+{
+
+    if (scan)
+    {
+        startScan();
+        scan = false;
+    }
+
+    if (doConnect && currentTime - lastConnectionAttempt >= CONNECTION_RETRY_INTERVAL)
+    {
+        lastConnectionAttempt = currentTime;
+        deviceConnected = connect(*pServerAddress);
+
+        if (deviceConnected)
+        {
+            Serial.println("Successfully connected to KICKR.");
+            doConnect = false;
+        }
+        else
+        {
+            Serial.println("Failed to connect to KICKR. Will retry in 5 seconds.");
+        }
+    }
+}
+
+void KickrProtocol::handleGearStatus(unsigned long currentTime)
+{
+
+    if (triggerGearRatiosFetch && currentTime - lastGearChangeTime >= GEAR_CHANGE_FETCH_INTERVAL)
+    {
+        getCurrentGear();
+        lastGearChangeTime = currentTime;
+        triggerGearRatiosFetch = false;
+    }
+}
+
+void KickrProtocol::setupLed()
+{
+    pinMode(LED_PIN, OUTPUT);
+    setStatusLed(false);
+}
+
+void KickrProtocol::setStatusLed(bool on)
+{
+    digitalWrite(LED_PIN, on ? LOW : HIGH);
+}
+
+void KickrProtocol::startScan()
+{
+    auto *pBLEScan = BLEDevice::getScan();
+    pBLEScan->setAdvertisedDeviceCallbacks(new AdvertisedDeviceCallbacks(*this));
+    pBLEScan->setInterval(BLE_SCAN_INTERVAL);
+    pBLEScan->setWindow(BLE_SCAN_WINDOW);
+    pBLEScan->setActiveScan(true);
+    pBLEScan->start(30, false);
+}
+
+void KickrProtocol::AdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice)
 {
     Serial.print("Device found: ");
     Serial.println(advertisedDevice.toString().c_str());
-    if (advertisedDevice.getName() == DEVICE_NAME)
+    if (advertisedDevice.getName().startsWith(DEVICE_NAME))
     {
-        extern bool doConnect;
-        extern BLEAddress *pServerAddress;
-        pServerAddress = new BLEAddress(advertisedDevice.getAddress());
+        Serial.println("Found KICKR device");
+        protocol.pServerAddress = new BLEAddress(advertisedDevice.getAddress());
         advertisedDevice.getScan()->stop();
-        doConnect = true;
+        protocol.doConnect = true;
     }
+}
+
+void MyClientCallback::onConnect(BLEClient *pclient)
+{
+    protocol.deviceConnected = true;
+    Serial.println("Connected");
+}
+
+void MyClientCallback::onDisconnect(BLEClient *pclient)
+{
+    Serial.println("Disconnected");
+    KickrProtocol::setStatusLed(false);
+    protocol.deviceConnected = false;
+    protocol.doConnect = false;
+    protocol.scan = true;
+    protocol.pClient = nullptr; // Reset client on failure
+}
+
+void KickrProtocol::handleTasks(unsigned long currentTime)
+{
+    handleConnection(currentTime);
+    handleGearStatus(currentTime);
 }

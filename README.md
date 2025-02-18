@@ -29,7 +29,7 @@ This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and 
     -   Search for "ESP32" and install the "esp32 by Espressif Systems" package.
 2.  Clone this repository to your local machine.
 3.  Open the `kickr_esp32.ino` file in the Arduino IDE.
-4.  Change the [`DEVICE_NAME`] to match your device and [`GEAR_RATIOS`] as desired from [`kickr_constants.h`](kickr_constants.h).
+4.  Change the [`GEAR_RATIOS`] as desired from [`kickr_constants.h`](kickr_constants.h).
 5.  Ensure the correct board is selected (`Tools` \> `Board` \> `ESP32 Dev Module` or similar).
 6.  Upload the code to your ESP32.
 
@@ -41,35 +41,14 @@ This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and 
 4.  Once connected, use the hardware buttons to change gears.
 5.  The Serial Monitor will display connection status, current gear, and other debug information.
 
-## Code Overview
-
-### `kickr_esp32.ino`
-
--   Main sketch file.
--   Initializes BLE, sets up the KICKR protocol, and handles the main program loop.
--   Scans for the KICKR device using `BLEDevice::getScan()`.
--   Connects to the KICKR using the [`KickrProtocol::connect`](kickr_protocol.cpp) method.
--   Changes gears using hardware buttons.
--   The `loop()` function contains the main logic for connecting and controlling the KICKR.
-
-### `kickr_protocol.h` and `kickr_protocol.cpp`
-
--   Defines the [`KickrProtocol`](kickr_protocol.h) class, which encapsulates the BLE communication with the KICKR.
--   Includes methods for connecting, disconnecting, changing gears, sending hello messages, and enabling notifications.
--   Implements the BLE communication using the ESP32 BLE library.
--   The [`KickrProtocol::commandCallback`](kickr_protocol.cpp) method handles incoming data from the KICKR, including gear information and hello responses.
--   The [`KickrProtocol::decode_riding_data`](kickr_protocol.cpp) method decodes riding data.
-
-### `kickr_constants.h`
-
--   Defines constants such as BLE service and characteristic UUIDs, device names, protocol constants, timing constants, and gear ratios.
--   The `GEAR_RATIOS` array defines the available gear ratios for the KICKR.
 
 ## Configuration
 
 -   `DEVICE_NAME` in [`kickr_constants.h`](kickr_constants.h):  Change this if your KICKR has a different name.
 -   `GEAR_CHANGE_INTERVAL` in [`kickr_constants.h`](kickr_constants.h): Adjust the interval between gear changes (in milliseconds).
 -   `GEAR_RATIOS` in [`kickr_constants.h`](kickr_constants.h):  This array defines the gear ratios that will be sent to the KICKR.  You can customize these values to match your desired virtual gearing.
+-   `DEBOUNCE_TIME` in `kickr_constants.h`: Set to 20ms for responsive button handling.
+-   `GEAR_LONG_PRESS_NUM_SHIFTS` in `kickr_constants.h`: Number of gears to shift during a long press.
 
 ## Troubleshooting
 

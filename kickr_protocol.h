@@ -18,9 +18,12 @@ class KickrProtocol
 {
 public:
     bool enableDataNotifications = false;
+    void init();
+    void startScan();
+    bool isConnected() const { return deviceConnected; }
     bool connect(BLEAddress address);
     void disconnect();
-    void changeGear(uint8_t gearIndex);
+    void changeGear(int8_t gearIndex);
     void getCurrentGear();
     void sendHello();
     void enableNotifications();
@@ -28,8 +31,12 @@ public:
     static void decode_riding_data(BLERemoteCharacteristic *pCharacteristic, uint8_t *data, size_t length, bool isNotify);
     static RidingData getCurrentRidingData() { return currentRidingData; }
     uint8_t getCurrentGearIndex() { return currentGear; }
-    void gearUp();
-    void gearDown();
+    void shiftGear(int8_t numGears);
+    void handleConnection(unsigned long currentTime);
+    void handleGearStatus(unsigned long currentTime);
+    void handleTasks(unsigned long currentTime);
+    static void setupLed();
+    static void setStatusLed(bool on);
 
 private:
     BLEClient *pClient = nullptr;
@@ -43,9 +50,30 @@ private:
     static void updateRidingData(uint8_t tag, uint32_t value);
     static RidingData currentRidingData;
     static uint8_t currentGear;
+    bool deviceConnected = false;
+    bool doConnect = false;
+    bool scan = true;
+    bool triggerGearRatiosFetch = false;
+    BLEAddress *pServerAddress = nullptr;
+    unsigned long lastConnectionAttempt = 0;
+    unsigned long lastGearChangeTime = 0;
+
+    class AdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
+        KickrProtocol& protocol;
+    public:
+        AdvertisedDeviceCallbacks(KickrProtocol& p) : protocol(p) {}
+        void onResult(BLEAdvertisedDevice advertisedDevice) override;
+    };
+
+    friend class MyClientCallback;
 };
 
-class KickrAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
+class MyClientCallback : public BLEClientCallbacks
 {
-    void onResult(BLEAdvertisedDevice advertisedDevice) override;
+    KickrProtocol &protocol;
+
+public:
+    MyClientCallback(KickrProtocol &p) : protocol(p) {}
+    void onConnect(BLEClient *pclient) override;
+    void onDisconnect(BLEClient *pclient) override;
 };
