@@ -356,7 +356,7 @@ void KickrProtocol::startScan()
     pBLEScan->setInterval(BLE_SCAN_INTERVAL);
     pBLEScan->setWindow(BLE_SCAN_WINDOW);
     pBLEScan->setActiveScan(true);
-    pBLEScan->start(30, false);
+    pBLEScan->start(0);
 }
 
 void KickrProtocol::AdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice)
