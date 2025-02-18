@@ -22,8 +22,6 @@ bool KickrProtocol::connect(BLEAddress address)
 
     Serial.println("Client created, attempting connection...");
     bool success = pClient->connect(address, BLE_ADDR_TYPE_RANDOM);
-    Serial.println(success ? "Connection successful" : "Connection failed");
-
     if (!success)
     {
         pClient = nullptr; // Reset client on failure
@@ -31,7 +29,6 @@ bool KickrProtocol::connect(BLEAddress address)
         return false;
     }
 
-    Serial.println("Connected to device");
     BLERemoteService *pRemoteService = pClient->getService(KICKR_SERVICE_UUID);
     if (pRemoteService == nullptr)
     {
@@ -154,7 +151,6 @@ void KickrProtocol::enableNotifications()
         if (pReadCmdCharacteristic->canIndicate())
         {
             pReadCmdCharacteristic->registerForNotify(commandCallback, false);
-            Serial.println("CMD indications registered");
         }
         else
         {
@@ -251,7 +247,9 @@ void KickrProtocol::commandCallback(BLERemoteCharacteristic *pCharacteristic, ui
         data[0] == MSG_HELLO[0] && data[1] == MSG_HELLO[1] && data[2] == MSG_HELLO[2] && data[3] == MSG_HELLO[3] &&
         data[4] == MSG_HELLO[4] && data[5] == MSG_HELLO[5] && data[6] == 0x02 && data[7] == MSG_HELLO[7])
     {
+#if DEBUG
         Serial.println("Received hello response");
+#endif
         setStatusLed(true);
         return;
     }
@@ -361,8 +359,6 @@ void KickrProtocol::startScan()
 
 void KickrProtocol::AdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice)
 {
-    Serial.print("Device found: ");
-    Serial.println(advertisedDevice.toString().c_str());
     if (advertisedDevice.getName().startsWith(DEVICE_NAME))
     {
         Serial.println("Found KICKR device");
@@ -375,7 +371,6 @@ void KickrProtocol::AdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice adve
 void MyClientCallback::onConnect(BLEClient *pclient)
 {
     protocol.deviceConnected = true;
-    Serial.println("Connected");
 }
 
 void MyClientCallback::onDisconnect(BLEClient *pclient)
