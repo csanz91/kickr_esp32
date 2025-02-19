@@ -2,6 +2,9 @@
 
 uint8_t KickrProtocol::currentGear = 1;
 RidingData KickrProtocol::currentRidingData = {0, 0, 0.0f, 0, false};
+bool KickrProtocol::ledFlashState = false;
+bool KickrProtocol::deviceReady = false;
+unsigned long KickrProtocol::lastLedFlashTime = 0;
 
 bool KickrProtocol::connect(BLEAddress address)
 {
@@ -251,6 +254,7 @@ void KickrProtocol::commandCallback(BLERemoteCharacteristic *pCharacteristic, ui
         Serial.println("Received hello response");
 #endif
         setStatusLed(true);
+        deviceReady = true;
         return;
     }
 
@@ -293,7 +297,6 @@ void KickrProtocol::init()
 {
     BLEDevice::init(CLIENT_NAME);
     setupLed();
-    setStatusLed(false);
 
     auto *pClient = BLEDevice::createClient();
     pClient->setClientCallbacks(new MyClientCallback(*this));
@@ -323,6 +326,9 @@ void KickrProtocol::handleConnection(unsigned long currentTime)
             Serial.println("Failed to connect to KICKR. Will retry in 5 seconds.");
         }
     }
+
+    if (!deviceReady)
+        flashLed(currentTime); // Flash LED while not connected
 }
 
 void KickrProtocol::handleGearStatus(unsigned long currentTime)
@@ -345,6 +351,16 @@ void KickrProtocol::setupLed()
 void KickrProtocol::setStatusLed(bool on)
 {
     digitalWrite(LED_PIN, on ? LOW : HIGH);
+}
+
+void KickrProtocol::flashLed(unsigned long currentTime)
+{
+    if (currentTime - lastLedFlashTime >= 500) // Flash interval of 500ms
+    {
+        ledFlashState = !ledFlashState;
+        setStatusLed(ledFlashState);
+        lastLedFlashTime = currentTime;
+    }
 }
 
 void KickrProtocol::startScan()
@@ -376,9 +392,10 @@ void MyClientCallback::onConnect(BLEClient *pclient)
 void MyClientCallback::onDisconnect(BLEClient *pclient)
 {
     Serial.println("Disconnected");
-    KickrProtocol::setStatusLed(false);
     protocol.deviceConnected = false;
+    protocol.deviceReady = false;
     protocol.doConnect = false;
+    protocol.triggerGearRatiosFetch = false;
     protocol.scan = true;
     protocol.pClient = nullptr; // Reset client on failure
 }

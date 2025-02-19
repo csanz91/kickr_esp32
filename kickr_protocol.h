@@ -21,6 +21,7 @@ public:
     void init();
     void startScan();
     bool isConnected() const { return deviceConnected; }
+    bool isReady() const { return deviceReady; }
     bool connect(BLEAddress address);
     void disconnect();
     void changeGear(int8_t gearIndex);
@@ -37,6 +38,7 @@ public:
     void handleTasks(unsigned long currentTime);
     static void setupLed();
     static void setStatusLed(bool on);
+    static void flashLed(unsigned long currentTime);
 
 private:
     BLEClient *pClient = nullptr;
@@ -51,12 +53,15 @@ private:
     static RidingData currentRidingData;
     static uint8_t currentGear;
     bool deviceConnected = false;
+    static bool deviceReady; // Indicates if the device is ready to receive commands
     bool doConnect = false;
     bool scan = true;
     bool triggerGearRatiosFetch = false;
     BLEAddress *pServerAddress = nullptr;
     unsigned long lastConnectionAttempt = 0;
     unsigned long lastGearChangeTime = 0;
+    static bool ledFlashState;
+    static unsigned long lastLedFlashTime;
 
     class AdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
     {
