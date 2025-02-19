@@ -34,7 +34,8 @@ constexpr uint16_t GEAR_RATIOS[] = {
 
 constexpr size_t MAX_GEAR = sizeof(GEAR_RATIOS) / sizeof(GEAR_RATIOS[0]);
 
-constexpr uint8_t GEAR_LONG_PRESS_NUM_SHIFTS = 2;
+constexpr uint8_t SHORT_PRESS_NUM_SHIFTS = 1;
+constexpr uint8_t LONG_PRESS_NUM_SHIFTS = 2;
 
 // Pin configuration
 #define UP_READ_PIN 1

@@ -11,11 +11,6 @@ private:
     int _pin;
     int _pinGND;
 
-    bool _isUpButton;
-
-    uint8_t _shortPressNumGears = 1;
-    uint8_t _longPressNumGears = GEAR_LONG_PRESS_NUM_SHIFTS;
-
     // State tracking
     int _lastButtonState;
     int _buttonState;
@@ -23,6 +18,7 @@ private:
 
     // Press detection variables
     unsigned long _pressStartTime;
+    unsigned long _lastGearChangeTime;
     bool _isLongPressActive;
 
     // Function pointers for callbacks
@@ -30,8 +26,7 @@ private:
 
 public:
     // Constructor
-    ButtonHandler(int pin, int pinGND, bool isUpButton, std::function<void(int8_t)> pressCallback);
-    unsigned long _lastGearChangeTime;
+    ButtonHandler(int pin, int pinGND, std::function<void(int8_t)> pressCallback);
 
     // Call this in each loop iteration
     void update();

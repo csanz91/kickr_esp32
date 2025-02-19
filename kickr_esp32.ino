@@ -13,8 +13,10 @@ void setup()
     kickr.init();
 
     // Initialize button handlers using lambda callbacks for shiftGear
-    upButton = new ButtonHandler(UP_READ_PIN, UP_GND_PIN, true, [&](int8_t numGears) { kickr.shiftGear(numGears); });
-    downButton = new ButtonHandler(DOWN_READ_PIN, DOWN_GND_PIN, false, [&](int8_t numGears) { kickr.shiftGear(numGears); });
+    upButton = new ButtonHandler(UP_READ_PIN, UP_GND_PIN, [&](int8_t numGears)
+                                 { kickr.shiftGear(numGears); });
+    downButton = new ButtonHandler(DOWN_READ_PIN, DOWN_GND_PIN, [&](int8_t numGears)
+                                   { kickr.shiftGear(-numGears); });
 }
 
 void loop()

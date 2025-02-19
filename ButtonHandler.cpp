@@ -1,11 +1,10 @@
 #include "ButtonHandler.h"
 
-ButtonHandler::ButtonHandler(int pin, int pinGND, bool isUpButton, std::function<void(int8_t)> pressCallback)
+ButtonHandler::ButtonHandler(int pin, int pinGND, std::function<void(int8_t)> pressCallback)
 {
     // Initialize pins and callbacks
     _pin = pin;
     _pinGND = pinGND;
-    _isUpButton = isUpButton;
     _pressCallback = pressCallback;
 
     // Initialize state variables
@@ -15,12 +14,6 @@ ButtonHandler::ButtonHandler(int pin, int pinGND, bool isUpButton, std::function
     _pressStartTime = 0;
     _isLongPressActive = false;
     _lastGearChangeTime = 0;
-
-    if (!_isUpButton)
-    {
-        _shortPressNumGears = -1;
-        _longPressNumGears = GEAR_LONG_PRESS_NUM_SHIFTS * -1;
-    }
 
     // Set up the button pin
     pinMode(_pin, INPUT_PULLUP);
@@ -59,7 +52,7 @@ void ButtonHandler::update()
                     // Short press action (single gear change)
                     if (_pressCallback)
                     {
-                        _pressCallback(_shortPressNumGears);
+                        _pressCallback(SHORT_PRESS_NUM_SHIFTS);
                     }
                 }
                 _isLongPressActive = false; // Reset long press flag on release
@@ -78,7 +71,7 @@ void ButtonHandler::update()
             // First gear change immediately when long press detected
             if (_pressCallback)
             {
-                _pressCallback(_longPressNumGears);
+                _pressCallback(LONG_PRESS_NUM_SHIFTS);
             }
         }
     }
@@ -92,7 +85,7 @@ void ButtonHandler::update()
 
             if (_pressCallback)
             {
-                _pressCallback(_longPressNumGears);
+                _pressCallback(LONG_PRESS_NUM_SHIFTS);
             }
         }
     }

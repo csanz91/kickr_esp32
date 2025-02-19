@@ -58,10 +58,12 @@ private:
     unsigned long lastConnectionAttempt = 0;
     unsigned long lastGearChangeTime = 0;
 
-    class AdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
-        KickrProtocol& protocol;
+    class AdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks
+    {
+        KickrProtocol &protocol;
+
     public:
-        AdvertisedDeviceCallbacks(KickrProtocol& p) : protocol(p) {}
+        AdvertisedDeviceCallbacks(KickrProtocol &p) : protocol(p) {}
         void onResult(BLEAdvertisedDevice advertisedDevice) override;
     };
 
