@@ -4,6 +4,7 @@ uint8_t KickrProtocol::currentGear = 1;
 RidingData KickrProtocol::currentRidingData = {0, 0, 0.0f, 0, false};
 bool KickrProtocol::ledFlashState = false;
 bool KickrProtocol::deviceReady = false;
+bool KickrProtocol::scan = true;
 unsigned long KickrProtocol::lastLedFlashTime = 0;
 
 bool KickrProtocol::connect(BLEAddress address)
@@ -327,7 +328,7 @@ void KickrProtocol::handleConnection(unsigned long currentTime)
         }
     }
 
-    if (!deviceReady)
+    if (!isReady())
         flashLed(currentTime); // Flash LED while not connected
 }
 
@@ -370,7 +371,13 @@ void KickrProtocol::startScan()
     pBLEScan->setInterval(BLE_SCAN_INTERVAL);
     pBLEScan->setWindow(BLE_SCAN_WINDOW);
     pBLEScan->setActiveScan(true);
-    pBLEScan->start(0);
+    pBLEScan->start(30, scanCompleteCB); // Pass scanCompleteCB as the callback to avoid blocking
+}
+
+void KickrProtocol::scanCompleteCB(BLEScanResults scanResults)
+{
+    Serial.println("Scan complete");
+    scan = true;
 }
 
 void KickrProtocol::AdvertisedDeviceCallbacks::onResult(BLEAdvertisedDevice advertisedDevice)

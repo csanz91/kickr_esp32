@@ -39,6 +39,7 @@ public:
     static void setupLed();
     static void setStatusLed(bool on);
     static void flashLed(unsigned long currentTime);
+    static void scanCompleteCB(BLEScanResults scanResults);
 
 private:
     BLEClient *pClient = nullptr;
@@ -54,8 +55,8 @@ private:
     static uint8_t currentGear;
     bool deviceConnected = false;
     static bool deviceReady; // Indicates if the device is ready to receive commands
+    static bool scan;
     bool doConnect = false;
-    bool scan = true;
     bool triggerGearRatiosFetch = false;
     BLEAddress *pServerAddress = nullptr;
     unsigned long lastConnectionAttempt = 0;
