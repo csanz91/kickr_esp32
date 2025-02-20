@@ -1,6 +1,6 @@
 # ESP32 KICKR Virtual Shifter
 
-This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and control the virtual gears using the builtin feature instead of simulating the wheel diamater or the resistance. It uses Bluetooth Low Energy (BLE) to communicate with the KICKR.
+This project allows an ESP32 to connect to a Wahoo KICKR CORE smart trainer and control the virtual gears using the builtin feature instead of simulating the wheel diamater or the resistance. It uses Bluetooth Low Energy (BLE) to communicate with the KICKR. This code has been tested with the FW version 1.5.36
 
 ## Features
 
